@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.casc;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
@@ -29,11 +28,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.lang.String.format;
@@ -145,7 +147,7 @@ public class ConfigurationAsCode extends ManagementLink {
         try {
             URL url = URI.create(configParameter).toURL();
             try(InputStreamReader reader = new InputStreamReader(url.openStream(), "UTF-8")) {
-                for (Map.Entry<String, Object> entry : entries(reader).collect(toList())) {
+                for (Entry entry : entries(reader).collect(toList())) {
                     configureWith(entry);
                 }
                 sources = Collections.singletonList(configParameter);
@@ -160,11 +162,31 @@ public class ConfigurationAsCode extends ManagementLink {
     private void _configureWithPaths(String configParameter) throws ConfiguratorException  {
         List<Path> configs = configs(configParameter);
         sources = configs.stream().map(Path::toAbsolutePath).map(Path::toString).collect(toList());
-        for (Map.Entry<String, Object> entry : configs.stream()
-                .flatMap(ConfigurationAsCode::entries).collect(toList())) {
+        for (Entry entry : configs.stream()
+                .flatMap(ConfigurationAsCode::entries)
+                .collect(Collectors.groupingBy(e -> e.key))
+                .values().stream()
+                .map(this::merge)
+                .collect(Collectors.toList()))
+        {
             configureWith(entry);
         }
     }
+
+    private Entry merge(List<Entry> entries) throws ConfiguratorException {
+        final Iterator<Entry> iterator = entries.iterator();
+        Entry e = iterator.next();
+        while (iterator.hasNext()) {
+            merge(e, iterator.next());
+        }
+        return e;
+    }
+
+    private void merge(Entry e, Entry next) throws ConfiguratorException {
+        // TODO merge yaml trees ...
+        throw new ConfiguratorException("Found conflicting elements " + e.key);
+    }
+
 
     /**
      * Recursive search for all {@link #YAML_FILES_PATTERN} in provided base path
@@ -194,7 +216,7 @@ public class ConfigurationAsCode extends ManagementLink {
      * @param config path to read from
      * @return stream of entries from yaml
      */
-    private static Stream<? extends Map.Entry<String, Object>> entries(Path config) {
+    private static Stream<Entry> entries(Path config) {
         try (Reader reader = Files.newBufferedReader(config)) {
             return entries(reader);
         } catch (IOException e) {
@@ -202,8 +224,8 @@ public class ConfigurationAsCode extends ManagementLink {
         }
     }
 
-    private static Stream<? extends Map.Entry<String, Object>> entries(Reader config) {
-        return ((Map<String, Object>) new Yaml().loadAs(config, Map.class)).entrySet().stream();
+    private static Stream<Entry> entries(Reader config) {
+        return ((Map<String, Object>) new Yaml().loadAs(config, Map.class)).entrySet().stream().map(Entry::new);
     }
 
     /**
@@ -213,7 +235,7 @@ public class ConfigurationAsCode extends ManagementLink {
      * @param entry key-value pair, where key should match to root configurator and value have all required properties
      * @throws ConfiguratorException configuration error
      */
-    public static void configureWith(Map.Entry<String, Object> entry) throws ConfiguratorException {
+    public static void configureWith(Entry entry) throws ConfiguratorException {
 
         RootElementConfigurator configurator = Configurator.lookupRootElement(entry.getKey());
         if (configurator == null) {
@@ -270,5 +292,31 @@ public class ConfigurationAsCode extends ManagementLink {
                     elements.addAll(configurator.getConfigurators());
                     listElements(elements, configurator.describe());
                 });
+    }
+
+    public static final class Entry implements Map.Entry<String, Object> {
+
+        private String key;
+        private Object value;
+
+        public Entry(Map.Entry<String, Object> entry) {
+            this.key = entry.getKey();
+            this.value = entry.getValue();
+        }
+
+        @Override
+        public String getKey() {
+            return null;
+        }
+
+        @Override
+        public Object getValue() {
+            return null;
+        }
+
+        @Override
+        public Object setValue(Object value) {
+            return null;
+        }
     }
 }

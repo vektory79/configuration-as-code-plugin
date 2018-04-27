@@ -31,7 +31,7 @@ import java.io.IOException;
  * @see Configurator#configure(Object)
  * @see ElementConfigurator
  */
-public class ConfiguratorException extends IOException {
+public class ConfiguratorException extends RuntimeException {
 
     @CheckForNull
     private final ElementConfigurator configurator;
