@@ -8,7 +8,7 @@ jenkins:
         namespace: "namespace"
         jenkinsUrl: "jenkinsUrl"
         jenkinsTunnel: "jenkinsTunnel"
-        containerCapStr: 42
+        containerCap: 42
         retentionTimeout: 5
         connectTimeout: 10
         readTimeout: 20
