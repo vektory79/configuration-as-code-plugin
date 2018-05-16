@@ -14,7 +14,7 @@
   <packaging>hpi</packaging>
 
   <properties>
-    <revision>0.6-alpha</revision>
+    <revision>1.0</revision>
     <changelist>-SNAPSHOT</changelist>
     <jenkins.version>2.60.3</jenkins.version>
     <java.level>8</java.level>
@@ -65,19 +65,7 @@
       <artifactId>snakeyaml</artifactId>
       <version>1.18</version>
     </dependency>
-
-    <dependency>
-      <groupId>org.jenkins-ci.plugins</groupId>
-      <artifactId>job-dsl</artifactId>
-      <version>1.66</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.codehaus.groovy</groupId>
-          <artifactId>groovy-all</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
+    
     <!-- plugin adapters-->
 
     <dependency>
@@ -279,6 +267,21 @@
       <version>1.17.1</version>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.jenkins-ci.plugins</groupId>
+      <artifactId>job-dsl</artifactId>
+      <version>1.66</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.codehaus.groovy</groupId>
+          <artifactId>groovy-all</artifactId>
+        </exclusion>
+      </exclusions>
+      <scope>test</scope>
+    </dependency>
+
+
     <!--TODO: This should be in a seperate plugin at some point -->
     <dependency>
       <groupId>com.bettercloud</groupId>
